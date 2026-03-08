@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transport Timeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  .form-footer {
+    background: var(--slate);
+    border-top: 1px solid var(--rule);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .footer-url {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: rgba(77,184,232,0.5);
+    letter-spacing: 0.3px;
+  }
+  #qr-container canvas,
+  #qr-container img {
+    width: 48px !important;
+    height: 48px !important;
+    opacity: 0.75;
+    border: 1px solid rgba(77,184,232,0.2);
+    padding: 2px;
+    background: #fff;
+    border-radius: 2px;
+  }
+</style>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --slate: #1b2d40;
+    --steel: #2c4a63;
+    --accent: #4db8e8;
+    --accent2: #e8a034;
+    --rule: #2a4a66;
+    --text: #d8e8f0;
+    --subtext: #7fa8c4;
+    --white: #f0f6fb;
+    --input-bg: rgba(77,184,232,0.06);
+    --input-border: #2c4a63;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #060e16;
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 30px 16px 60px;
+  }
+
+  .page-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 9px 22px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--navy);
+  }
+  .btn-primary:hover { background: #72cbf0; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-secondary:hover { background: rgba(77,184,232,0.1); }
+
+  .btn-clear {
+    background: transparent;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+  .btn-clear:hover { background: rgba(232,160,52,0.1); }
+
+  /* FORM CARD */
+  #form-card {
+    background: var(--navy);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    width: 340px;
+    padding: 0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(77,184,232,0.08);
+    position: relative;
+  }
+
+  .form-header {
+    background: var(--slate);
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .form-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .form-subtitle {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .form-body {
+    padding: 8px 0 16px;
+  }
+
+  /* SECTION DIVIDERS */
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 10px 20px 4px;
+    opacity: 0.7;
+  }
+
+  /* ROWS */
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    min-height: 36px;
+    border-bottom: 1px solid rgba(44,74,99,0.4);
+    gap: 10px;
+    transition: background 0.15s;
+  }
+
+  .row:hover { background: rgba(77,184,232,0.04); }
+
+  .row:last-child { border-bottom: none; }
+
+  .row-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--subtext);
+    letter-spacing: 0.3px;
+    flex: 1;
+    line-height: 1.2;
+  }
+
+  .row-label.nurse {
+    font-size: 11px;
+    color: rgba(127,168,196,0.6);
+    padding-left: 12px;
+  }
+
+  .time-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--white);
+    background: var(--input-bg);
+    border: none;
+    border-bottom: 1px solid var(--input-border);
+    width: 80px;
+    padding: 4px 6px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .time-input:focus {
+    border-bottom-color: var(--accent);
+    background: rgba(77,184,232,0.1);
+    color: var(--accent);
+  }
+
+  .time-input::placeholder {
+    color: rgba(127,168,196,0.3);
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  /* special altitude field */
+  .alt-input {
+    width: 100px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* divider rule */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent), transparent);
+    opacity: 0.25;
+    margin: 6px 20px;
+  }
+
+  .footer-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: rgba(127,168,196,0.4);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .clear-row {
+    margin-bottom: 20px;
+    width: 340px;
+  }
+
+  .btn-new-flight {
+    width: 100%;
+    background: linear-gradient(135deg, #1a3a1a, #0f2a0f);
+    color: #4de87a;
+    border: 1px solid #2a6a3a;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 11px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-new-flight:hover {
+    background: linear-gradient(135deg, #1f4a1f, #153515);
+    border-color: #4de87a;
+    box-shadow: 0 0 12px rgba(77,232,122,0.2);
+    transform: translateY(-1px);
+  }
+
+
+  #capture-msg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6,14,22,0.85);
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  #capture-msg.active { display: flex; }
+
+  /* PRINT STYLES */
+  @media print {
+    body { background: white; padding: 0; }
+    .page-controls { display: none; }
+    #form-card {
+      border: 1px solid #ccc;
+      box-shadow: none;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    :root {
+      --navy: #fff;
+      --slate: #f4f7fa;
+      --rule: #d0dce8;
+      --text: #1a2a38;
+      --subtext: #4a6a8a;
+      --accent: #1a5a8a;
+      --accent2: #c07800;
+      --white: #111;
+      --input-bg: transparent;
+      --input-border: #b0c8e0;
+    }
+    .status-dot { display: none; }
+    .time-input { background: transparent; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-controls">
+  <button class="btn btn-primary" onclick="exportImage()">⬇ Save as Image</button>
+  <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+</div>
+<div class="clear-row">
+  <button class="btn btn-new-flight" onclick="clearForm()">✈ Clear Entries — Start New Flight</button>
+</div>
+
+<div id="form-card">
+  <div class="form-header">
+    <svg class="header-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="14" stroke="#4db8e8" stroke-width="1.5" opacity="0.4"/>
+      <path d="M16 6 L16 26 M6 16 L26 16" stroke="#4db8e8" stroke-width="1" opacity="0.3"/>
+      <circle cx="16" cy="16" r="5" stroke="#4db8e8" stroke-width="1.5"/>
+      <path d="M16 4 L16 8 M16 24 L16 28 M4 16 L8 16 M24 16 L28 16" stroke="#4db8e8" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="form-title">Transport Timeline</div>
+      <div class="form-subtitle">Flight Transport Documentation</div>
+    </div>
+  </div>
+
+  <div class="form-body">
+
+    <!-- DISPATCH -->
+    <div class="row">
+      <span class="row-label">Time Dispatched</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Sending Facility</div>
+
+    <div class="row">
+      <span class="row-label">Report from Sending</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label nurse">└ Nurse</span>
+      <input class="time-input" type="text" placeholder="——" style="font-size:12px; letter-spacing:0.5px;">
+    </div>
+    <div class="row">
+      <span class="row-label">En Route to Sending</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Arrived Sending</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Arrived Bedside</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Left Bedside</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Left Sending</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Air Transport</div>
+
+    <div class="row">
+      <span class="row-label">Arrived Send. Airport</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Takeoff Send. Airport</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Arrived Recv. Airport</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Receiving Facility</div>
+
+    <div class="row">
+      <span class="row-label">Report to Receiving</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label nurse">└ Nurse</span>
+      <input class="time-input" type="text" placeholder="——" style="font-size:12px; letter-spacing:0.5px;">
+    </div>
+    <div class="row">
+      <span class="row-label">Arrived Recv. Facility</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Arrived Recv. Bedside</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+    <div class="row">
+      <span class="row-label">Transfer of Care</span>
+      <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Flight Data</div>
+
+    <div class="row">
+      <span class="row-label">Cabin Altitude</span>
+      <input class="time-input alt-input" type="text" placeholder="ft / m">
+    </div>
+
+  </div>
+
+  <div class="form-footer">
+    <div class="footer-left">
+      <span class="footer-label">NurseMentor Consulting</span>
+      <span class="footer-url">github.com/nurse-adventurer/transport-timeline.html</span>
+    </div>
+    <div id="qr-container"></div>
+  </div>
+</div>
+
+<div id="capture-msg">Generating image…</div>
+
+<script>
+  // Generate QR code for GitHub URL
+  window.addEventListener('load', () => {
+    new QRCode(document.getElementById('qr-container'), {
+      text: 'https://github.com/nurse-adventurer/transport-timeline.html',
+      width: 48,
+      height: 48,
+      colorDark: '#0d1b2a',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+  function autoFormat(el) {
+    let v = el.value.replace(/[^0-9]/g, '');
+    if (v.length >= 3) v = v.slice(0,2) + ':' + v.slice(2,4);
+    el.value = v;
+  }
+
+  // Export form card as PNG image
+  async function exportImage() {
+    const msg = document.getElementById('capture-msg');
+    msg.classList.add('active');
+
+    // Temporarily hide interactive focus states
+    const card = document.getElementById('form-card');
+    const btns = document.querySelector('.page-controls');
+    btns.style.display = 'none';
+
+    // Small delay to let styles settle
+    await new Promise(r => setTimeout(r, 100));
+
+    try {
+      const canvas = await html2canvas(card, {
+        scale: 3,
+        backgroundColor: '#0d1b2a',
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+      });
+
+      const link = document.createElement('a');
+      link.download = 'transport-timeline.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch(e) {
+      alert('Image export failed. Try the Print option instead.');
+    }
+
+    btns.style.display = '';
+    msg.classList.remove('active');
+  }
+
+  // Clear all inputs
+  function clearForm() {
+    if (!confirm('Clear all entries and start a new flight?')) return;
+    document.querySelectorAll('input').forEach(el => el.value = '');
+    // Brief flash on form card to confirm
+    const card = document.getElementById('form-card');
+    card.style.borderTopColor = '#4de87a';
+    setTimeout(() => { card.style.borderTopColor = ''; }, 600);
+  }
+</script>
+</body>
+</html>
