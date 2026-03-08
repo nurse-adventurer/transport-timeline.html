@@ -3,51 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transport Timeline</title>
+<title>Ruthie's Transport Timeline</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  .form-footer {
-    background: var(--slate);
-    border-top: 1px solid var(--rule);
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-  .footer-left {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .footer-url {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 8px;
-    color: rgba(77,184,232,0.5);
-    letter-spacing: 0.3px;
-  }
-  #qr-container canvas,
-  #qr-container img {
-    width: 48px !important;
-    height: 48px !important;
-    opacity: 0.75;
-    border: 1px solid rgba(77,184,232,0.2);
-    padding: 2px;
-    background: #fff;
-    border-radius: 2px;
-  }
-</style>
-<style>
   :root {
     --navy: #0d1b2a;
     --slate: #1b2d40;
-    --steel: #2c4a63;
     --accent: #4db8e8;
-    --accent2: #e8a034;
     --rule: #2a4a66;
-    --text: #d8e8f0;
     --subtext: #7fa8c4;
     --white: #f0f6fb;
     --input-bg: rgba(77,184,232,0.06);
@@ -63,201 +28,41 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     padding: 30px 16px 60px;
   }
 
+  /* ── BUTTONS ── */
   .page-controls {
     display: flex;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .clear-row {
+    margin-bottom: 20px;
+    width: 408px;
   }
 
   .btn {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 16px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    padding: 9px 22px;
+    padding: 10px 24px;
     border: none;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
   }
 
-  .btn-primary {
-    background: var(--accent);
-    color: var(--navy);
-  }
+  .btn-primary { background: var(--accent); color: var(--navy); }
   .btn-primary:hover { background: #72cbf0; transform: translateY(-1px); }
 
-  .btn-secondary {
-    background: transparent;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-  }
+  .btn-secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
   .btn-secondary:hover { background: rgba(77,184,232,0.1); }
-
-  .btn-clear {
-    background: transparent;
-    color: var(--accent2);
-    border: 1px solid var(--accent2);
-  }
-  .btn-clear:hover { background: rgba(232,160,52,0.1); }
-
-  /* FORM CARD */
-  #form-card {
-    background: var(--navy);
-    border: 1px solid var(--rule);
-    border-top: 3px solid var(--accent);
-    width: 340px;
-    padding: 0;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(77,184,232,0.08);
-    position: relative;
-  }
-
-  .form-header {
-    background: var(--slate);
-    padding: 16px 20px 14px;
-    border-bottom: 1px solid var(--rule);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .header-icon {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-  }
-
-  .form-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--white);
-    line-height: 1;
-  }
-
-  .form-subtitle {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    color: var(--accent);
-    text-transform: uppercase;
-    margin-top: 3px;
-  }
-
-  .form-body {
-    padding: 8px 0 16px;
-  }
-
-  /* SECTION DIVIDERS */
-  .section-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 9px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--accent);
-    padding: 10px 20px 4px;
-    opacity: 0.7;
-  }
-
-  /* ROWS */
-  .row {
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    min-height: 36px;
-    border-bottom: 1px solid rgba(44,74,99,0.4);
-    gap: 10px;
-    transition: background 0.15s;
-  }
-
-  .row:hover { background: rgba(77,184,232,0.04); }
-
-  .row:last-child { border-bottom: none; }
-
-  .row-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--subtext);
-    letter-spacing: 0.3px;
-    flex: 1;
-    line-height: 1.2;
-  }
-
-  .row-label.nurse {
-    font-size: 11px;
-    color: rgba(127,168,196,0.6);
-    padding-left: 12px;
-  }
-
-  .time-input {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    color: var(--white);
-    background: var(--input-bg);
-    border: none;
-    border-bottom: 1px solid var(--input-border);
-    width: 80px;
-    padding: 4px 6px;
-    text-align: center;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
-    letter-spacing: 1px;
-    flex-shrink: 0;
-  }
-
-  .time-input:focus {
-    border-bottom-color: var(--accent);
-    background: rgba(77,184,232,0.1);
-    color: var(--accent);
-  }
-
-  .time-input::placeholder {
-    color: rgba(127,168,196,0.3);
-    font-size: 11px;
-    letter-spacing: 2px;
-  }
-
-  /* special altitude field */
-  .alt-input {
-    width: 100px;
-    font-family: 'Share Tech Mono', monospace;
-  }
-
-  /* divider rule */
-  .divider {
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--accent), transparent);
-    opacity: 0.25;
-    margin: 6px 20px;
-  }
-
-  .footer-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px;
-    color: rgba(127,168,196,0.4);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  .clear-row {
-    margin-bottom: 20px;
-    width: 340px;
-  }
 
   .btn-new-flight {
     width: 100%;
@@ -266,10 +71,10 @@
     border: 1px solid #2a6a3a;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 16px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    padding: 11px 22px;
+    padding: 12px 22px;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
@@ -281,47 +86,186 @@
     transform: translateY(-1px);
   }
 
+  /* ── CARD ── */
+  #form-card {
+    background: var(--navy);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    width: 408px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(77,184,232,0.08);
+    transition: border-top-color 0.4s;
+  }
 
+  /* ── HEADER ── */
+  .form-header {
+    background: var(--slate);
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .header-icon { width: 38px; height: 38px; flex-shrink: 0; }
+
+  .form-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .form-subtitle {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ── BODY ── */
+  .form-body { padding: 8px 0 16px; }
+
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 10px 24px 4px;
+    opacity: 0.7;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    min-height: 43px;
+    border-bottom: 1px solid rgba(44,74,99,0.4);
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .row:hover { background: rgba(77,184,232,0.04); }
+
+  .row-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--subtext);
+    letter-spacing: 0.3px;
+    flex: 1;
+    line-height: 1.2;
+  }
+
+  .row-label.nurse {
+    font-size: 13px;
+    color: rgba(127,168,196,0.6);
+    padding-left: 14px;
+  }
+
+  .time-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: var(--white);
+    background: var(--input-bg);
+    border: none;
+    border-bottom: 1px solid var(--input-border);
+    width: 90px;
+    padding: 4px 6px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+  .time-input:focus {
+    border-bottom-color: var(--accent);
+    background: rgba(77,184,232,0.1);
+    color: var(--accent);
+  }
+  .time-input::placeholder {
+    color: rgba(127,168,196,0.3);
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+
+  .alt-input { width: 110px; }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent), transparent);
+    opacity: 0.25;
+    margin: 6px 24px;
+  }
+
+  /* ── FOOTER ── */
+  .form-footer {
+    background: var(--slate);
+    border-top: 1px solid var(--rule);
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .footer-left { display: flex; flex-direction: column; gap: 3px; }
+
+  .footer-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: rgba(127,168,196,0.4);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .footer-url {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: rgba(77,184,232,0.5);
+    letter-spacing: 0.3px;
+  }
+
+  #qr-container canvas,
+  #qr-container img {
+    width: 52px !important;
+    height: 52px !important;
+    opacity: 0.8;
+    border: 1px solid rgba(77,184,232,0.25);
+    padding: 2px;
+    background: #fff;
+    border-radius: 2px;
+    display: block;
+  }
+
+  /* ── OVERLAY ── */
   #capture-msg {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(6,14,22,0.85);
+    background: rgba(6,14,22,0.88);
     align-items: center;
     justify-content: center;
     z-index: 999;
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
+    font-size: 22px;
     color: var(--accent);
     letter-spacing: 2px;
   }
-
   #capture-msg.active { display: flex; }
 
-  /* PRINT STYLES */
+  /* ── PRINT ── */
   @media print {
     body { background: white; padding: 0; }
-    .page-controls { display: none; }
-    #form-card {
-      border: 1px solid #ccc;
-      box-shadow: none;
-      width: 100%;
-      max-width: 360px;
-      margin: 0 auto;
-    }
+    .page-controls, .clear-row { display: none; }
+    #form-card { border: 1px solid #ccc; box-shadow: none; width: 100%; max-width: 420px; margin: 0 auto; }
     :root {
-      --navy: #fff;
-      --slate: #f4f7fa;
-      --rule: #d0dce8;
-      --text: #1a2a38;
-      --subtext: #4a6a8a;
-      --accent: #1a5a8a;
-      --accent2: #c07800;
-      --white: #111;
-      --input-bg: transparent;
-      --input-border: #b0c8e0;
+      --navy: #fff; --slate: #f4f7fa; --rule: #d0dce8;
+      --subtext: #4a6a8a; --accent: #1a5a8a; --white: #111;
+      --input-bg: transparent; --input-border: #b0c8e0;
     }
-    .status-dot { display: none; }
     .time-input { background: transparent; }
   }
 </style>
@@ -345,14 +289,13 @@
       <path d="M16 4 L16 8 M16 24 L16 28 M4 16 L8 16 M24 16 L28 16" stroke="#4db8e8" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
     <div>
-      <div class="form-title">Transport Timeline</div>
+      <div class="form-title">Ruthie's Transport Timeline</div>
       <div class="form-subtitle">Flight Transport Documentation</div>
     </div>
   </div>
 
   <div class="form-body">
 
-    <!-- DISPATCH -->
     <div class="row">
       <span class="row-label">Time Dispatched</span>
       <input class="time-input" type="text" placeholder="00:00" maxlength="8" oninput="autoFormat(this)">
@@ -367,7 +310,7 @@
     </div>
     <div class="row">
       <span class="row-label nurse">└ Nurse</span>
-      <input class="time-input" type="text" placeholder="——" style="font-size:12px; letter-spacing:0.5px;">
+      <input class="time-input" type="text" placeholder="——">
     </div>
     <div class="row">
       <span class="row-label">En Route to Sending</span>
@@ -415,7 +358,7 @@
     </div>
     <div class="row">
       <span class="row-label nurse">└ Nurse</span>
-      <input class="time-input" type="text" placeholder="——" style="font-size:12px; letter-spacing:0.5px;">
+      <input class="time-input" type="text" placeholder="——">
     </div>
     <div class="row">
       <span class="row-label">Arrived Recv. Facility</span>
@@ -449,69 +392,78 @@
   </div>
 </div>
 
-<div id="capture-msg">Generating image…</div>
+<div id="capture-msg">Saving image…</div>
 
 <script>
-  // Generate QR code for GitHub URL
+  // QR code pointing to GitHub URL
   window.addEventListener('load', () => {
     new QRCode(document.getElementById('qr-container'), {
       text: 'https://github.com/nurse-adventurer/transport-timeline.html',
-      width: 48,
-      height: 48,
+      width: 52,
+      height: 52,
       colorDark: '#0d1b2a',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M
     });
   });
+
+  // Auto-format HH:MM as user types
   function autoFormat(el) {
     let v = el.value.replace(/[^0-9]/g, '');
     if (v.length >= 3) v = v.slice(0,2) + ':' + v.slice(2,4);
     el.value = v;
   }
 
-  // Export form card as PNG image
+  // Save as image — hides all chrome, captures only the card
   async function exportImage() {
-    const msg = document.getElementById('capture-msg');
+    const msg      = document.getElementById('capture-msg');
+    const controls = document.querySelector('.page-controls');
+    const clearRow = document.querySelector('.clear-row');
+    const card     = document.getElementById('form-card');
+
+    // Use visibility so layout doesn't shift
+    controls.style.visibility = 'hidden';
+    clearRow.style.visibility = 'hidden';
     msg.classList.add('active');
 
-    // Temporarily hide interactive focus states
-    const card = document.getElementById('form-card');
-    const btns = document.querySelector('.page-controls');
-    btns.style.display = 'none';
-
-    // Small delay to let styles settle
-    await new Promise(r => setTimeout(r, 100));
+    // Blur any focused input so cursor/glow doesn't appear in export
+    if (document.activeElement) document.activeElement.blur();
+    await new Promise(r => setTimeout(r, 200));
 
     try {
       const canvas = await html2canvas(card, {
         scale: 3,
         backgroundColor: '#0d1b2a',
         useCORS: true,
+        allowTaint: true,
         logging: false,
-        scrollX: 0,
-        scrollY: 0,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        windowWidth:  document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
       });
 
       const link = document.createElement('a');
-      link.download = 'transport-timeline.png';
+      link.download = 'ruthies-transport-timeline.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch(e) {
-      alert('Image export failed. Try the Print option instead.');
+      alert('Export failed — use the Print option instead.');
+      console.error(e);
     }
 
-    btns.style.display = '';
+    controls.style.visibility = '';
+    clearRow.style.visibility = '';
     msg.classList.remove('active');
   }
 
-  // Clear all inputs
+  // Clear all fields for a new flight
   function clearForm() {
     if (!confirm('Clear all entries and start a new flight?')) return;
     document.querySelectorAll('input').forEach(el => el.value = '');
-    // Brief flash on form card to confirm
     const card = document.getElementById('form-card');
     card.style.borderTopColor = '#4de87a';
-    setTimeout(() => { card.style.borderTopColor = ''; }, 600);
+    setTimeout(() => { card.style.borderTopColor = ''; }, 700);
   }
 </script>
 </body>
