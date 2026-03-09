@@ -8,15 +8,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, onDisconnect, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<!-- Firebase compat (no module needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
-  // ┌─────────────────────────────────────────────────────────┐
-  // │  PASTE YOUR FIREBASE CONFIG HERE (replace all values)   │
-  // └─────────────────────────────────────────────────────────┘
+<script>
   const firebaseConfig = {
     apiKey:            "AIzaSyByPJnYUjSZrBO4sh0oHgz1ZSC5SZE2TVo",
     authDomain:        "transport-timeline.firebaseapp.com",
@@ -27,15 +23,14 @@
     appId:             "1:910773372440:web:757b0d5cf0680bc037e56d"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
   let currentFlightId = null;
   let localId = 'user-' + Math.random().toString(36).slice(2, 7);
-  let suppressSync = false; // prevent echo when we receive our own updates
+  let suppressSync = false;
 
-  // Called when user clicks "Join Session"
-  window.joinSession = function() {
+  function joinSession() {
     const raw = document.getElementById('flight-id-input').value.trim();
     if (!raw) { flashInput('flight-id-input'); return; }
 
@@ -45,14 +40,13 @@
     document.getElementById('session-badge').textContent    = '✈ Flight: ' + raw.toUpperCase();
 
     // Register presence
-    const presenceRef = ref(db, `flights/${currentFlightId}/presence/${localId}`);
-    set(presenceRef, { joined: Date.now() });
-    onDisconnect(presenceRef).remove();
+    const presenceRef = db.ref(`flights/${currentFlightId}/presence/${localId}`);
+    presenceRef.set({ joined: Date.now() });
+    presenceRef.onDisconnect().remove();
 
-    // Watch presence to show collaborator dot
-    onValue(ref(db, `flights/${currentFlightId}/presence`), snap => {
-      const users = snap.val() || {};
-      const count = Object.keys(users).length;
+    // Watch presence — show collab dot when >1 user
+    db.ref(`flights/${currentFlightId}/presence`).on('value', snap => {
+      const count = Object.keys(snap.val() || {}).length;
       const dot   = document.getElementById('collab-dot');
       const label = document.getElementById('collab-label');
       if (count > 1) {
@@ -64,40 +58,58 @@
       }
     });
 
-    // Listen for field changes from any user
-    onValue(ref(db, `flights/${currentFlightId}/fields`), snap => {
+    // Listen for remote field changes
+    db.ref(`flights/${currentFlightId}/fields`).on('value', snap => {
       if (suppressSync) return;
       const data = snap.val() || {};
       document.querySelectorAll('.time-input').forEach(input => {
         const key = input.dataset.key;
         if (key && data[key] !== undefined && document.activeElement !== input) {
-          input.value = data[key];
+          if (input.value !== data[key]) {
+            input.value = data[key];
+            // Brief green flash for remote updates
+            input.classList.add('remote-update');
+            setTimeout(() => input.classList.remove('remote-update'), 800);
+          }
         }
       });
     });
-  };
+  }
 
-  // Sync a single field to Firebase on change
-  window.syncField = function(el) {
+  function syncField(el) {
     if (!currentFlightId) return;
     const key = el.dataset.key;
     if (!key) return;
     suppressSync = true;
-    set(ref(db, `flights/${currentFlightId}/fields/${key}`), el.value)
+    db.ref(`flights/${currentFlightId}/fields/${key}`).set(el.value)
       .finally(() => { suppressSync = false; });
-  };
+  }
 
-  // Clear all fields in Firebase + locally
-  window.clearFlightData = function() {
-    if (!confirm('Clear all entries and start a new flight?')) return;
+  function clearFlightData() {
+    if (!confirm('Clear entries and start a new flight?')) return;
     if (currentFlightId) {
-      set(ref(db, `flights/${currentFlightId}/fields`), {});
+      db.ref(`flights/${currentFlightId}/fields`).set({});
     }
     document.querySelectorAll('.time-input').forEach(el => el.value = '');
-    const card = document.getElementById('form-card');
-    card.style.borderTopColor = '#4de87a';
-    setTimeout(() => { card.style.borderTopColor = ''; }, 700);
-  };
+    currentFlightId = null;
+    document.getElementById('main-screen').style.display    = 'none';
+    document.getElementById('session-screen').style.display = 'flex';
+    document.getElementById('flight-id-input').value = '';
+    setTimeout(() => document.getElementById('flight-id-input').focus(), 150);
+  }
+
+  function flashInput(id) {
+    const el = document.getElementById(id);
+    el.classList.add('shake');
+    el.focus();
+    setTimeout(() => el.classList.remove('shake'), 400);
+  }
+
+  function autoFormat(el) {
+    let v = el.value.replace(/[^0-9]/g, '');
+    if (v.length >= 3) v = v.slice(0,2) + ':' + v.slice(2,4);
+    el.value = v;
+  }
 </script>
 
 <style>
@@ -703,21 +715,6 @@
       correctLevel: QRCode.CorrectLevel.M
     });
   });
-
-  // Auto-format HH:MM
-  function autoFormat(el) {
-    let v = el.value.replace(/[^0-9]/g, '');
-    if (v.length >= 3) v = v.slice(0,2) + ':' + v.slice(2,4);
-    el.value = v;
-  }
-
-  // Flash input for empty Flight ID
-  function flashInput(id) {
-    const el = document.getElementById(id);
-    el.classList.add('shake');
-    el.focus();
-    setTimeout(() => el.classList.remove('shake'), 400);
-  }
 
   // Save as image
   async function exportImage() {
