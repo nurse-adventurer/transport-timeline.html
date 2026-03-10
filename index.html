@@ -112,11 +112,102 @@ function renderStamp(cell, value, isRemote) {
     cell.classList.add('stamped');
     cell.innerHTML =
       `<span class="stamp-time${isRemote?' remote-flash':''}">${value}</span>`+
+      `<button class="edit-stamp" onclick="editStamp('${key}')" title="Edit time">✎</button>`+
       `<button class="clear-stamp" onclick="clearStamp('${key}')" title="Clear">✕</button>`;
   } else {
     cell.classList.remove('stamped');
     cell.innerHTML = `<button class="tap-btn" onclick="stampField('${key}')">⏱ TAP</button>`;
   }
+}
+function editStamp(key) {
+  const cell = document.querySelector(`.stamp-cell[data-key="${key}"]`);
+  if (!cell) return;
+  const current = cell.querySelector('.stamp-time').textContent;
+  cell.innerHTML =
+    `<input class="stamp-edit-input" id="edit-${key}" type="text" value="${current}" maxlength="5" `+
+    `onkeydown="handleEditKey(event,'${key}')" oninput="formatEditInput(this)">`+
+    `<button class="edit-confirm" onclick="confirmEdit('${key}')">✓</button>`+
+    `<button class="edit-cancel" onclick="cancelEdit('${key}','${current}')">✕</button>`;
+  const inp = document.getElementById('edit-'+key);
+  inp.focus();
+  inp.select();
+}
+function formatEditInput(el) {
+  let v = el.value.replace(/[^0-9]/g,'');
+  if (v.length >= 3) v = v.slice(0,2)+':'+v.slice(2,4);
+  el.value = v;
+}
+function handleEditKey(e, key) {
+  if (e.key==='Enter') confirmEdit(key);
+  if (e.key==='Escape') {
+    const inp = document.getElementById('edit-'+key);
+    cancelEdit(key, inp ? inp.defaultValue : '');
+  }
+}
+function confirmEdit(key) {
+  const inp = document.getElementById('edit-'+key);
+  if (!inp) return;
+  const val = inp.value.trim();
+  // Validate HH:MM
+  if (!/^\d{2}:\d{2}$/.test(val)) {
+    inp.classList.add('invalid');
+    inp.focus();
+    setTimeout(()=>inp.classList.remove('invalid'),600);
+    return;
+  }
+  const cell = document.querySelector(`.stamp-cell[data-key="${key}"]`);
+  renderStamp(cell, val, false);
+  pushField(key, val);
+}
+function cancelEdit(key, original) {
+  const cell = document.querySelector(`.stamp-cell[data-key="${key}"]`);
+  renderStamp(cell, original, false);
+}
+// Edit timeline intervention time
+function editTlTime(key, current) {
+  const entry = document.getElementById('tl-'+key);
+  if (!entry) return;
+  const timeEl = entry.querySelector('.tl-time');
+  const orig = timeEl.textContent;
+  timeEl.outerHTML =
+    `<input class="tl-edit-input" id="tledit-${key}" type="text" value="${orig}" maxlength="8" `+
+    `onkeydown="handleTlEditKey(event,'${key}','${orig}')" oninput="formatTlInput(this)">`;
+  const inp = document.getElementById('tledit-'+key);
+  if (inp) { inp.focus(); inp.select(); }
+}
+function formatTlInput(el) {
+  let v = el.value.replace(/[^0-9]/g,'');
+  if (v.length > 4) v = v.slice(0,2)+':'+v.slice(2,4)+':'+v.slice(4,6);
+  else if (v.length >= 3) v = v.slice(0,2)+':'+v.slice(2,4);
+  el.value = v;
+}
+function handleTlEditKey(e, key, orig) {
+  if (e.key==='Enter') confirmTlEdit(key, orig);
+  if (e.key==='Escape') cancelTlEdit(key, orig);
+}
+function confirmTlEdit(key, orig) {
+  const inp = document.getElementById('tledit-'+key);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(val)) {
+    inp.classList.add('invalid'); inp.focus();
+    setTimeout(()=>inp && inp.classList.remove('invalid'),600);
+    return;
+  }
+  // Update Firebase
+  if (flightId) db.ref(`flights/${flightId}/interventions/${key}/ts`).set(val);
+  // Re-render the time span
+  inp.outerHTML = `<span class="tl-time">${val}</span>`;
+  // Re-attach edit on click
+  const entry = document.getElementById('tl-'+key);
+  if (entry) {
+    const ts = entry.querySelector('.tl-time');
+    if (ts) ts.addEventListener('dblclick', ()=>editTlTime(key, val));
+  }
+}
+function cancelTlEdit(key, orig) {
+  const inp = document.getElementById('tledit-'+key);
+  if (inp) inp.outerHTML = `<span class="tl-time">${orig}</span>`;
 }
 function syncText(el) { pushField(el.dataset.key, el.value); }
 function pushField(key, value) {
@@ -164,10 +255,11 @@ function addTimelineEntry(key, ts, label, category, append) {
   div.className = 'tl-entry tl-'+category;
   div.id = 'tl-'+key;
   div.innerHTML =
-    `<span class="tl-time">${ts}</span>`+
+    `<span class="tl-time" title="Double-tap to edit">${ts}</span>`+
     `<span class="tl-cat">${category}</span>`+
     `<span class="tl-label">${label}</span>`+
     `<button class="tl-del" onclick="deleteIntervention('${key}')" title="Remove">✕</button>`;
+  div.querySelector('.tl-time').addEventListener('dblclick', ()=>editTlTime(key, ts));
 
   if (append) {
     // Insert in sorted order by key (timestamp)
@@ -383,6 +475,38 @@ body{
   padding:4px 5px;border-radius:3px;transition:all 0.15s;
 }
 .clear-stamp:hover{color:var(--red);background:rgba(232,77,106,0.1);}
+.edit-stamp{
+  font-size:13px;color:rgba(77,184,232,0.35);background:none;border:none;cursor:pointer;
+  padding:4px 5px;border-radius:3px;transition:all 0.15s;line-height:1;
+}
+.edit-stamp:hover{color:var(--accent);background:rgba(77,184,232,0.1);}
+.stamp-edit-input{
+  font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--accent);
+  background:rgba(77,184,232,0.1);border:1px solid var(--accent);border-radius:4px;
+  width:72px;padding:3px 6px;text-align:center;outline:none;letter-spacing:2px;
+  transition:border-color 0.2s;
+}
+.stamp-edit-input.invalid{border-color:var(--red);animation:shake 0.3s ease;}
+.edit-confirm{
+  font-size:14px;font-weight:700;color:var(--green);background:rgba(77,232,122,0.1);
+  border:1px solid rgba(77,232,122,0.3);border-radius:3px;cursor:pointer;
+  padding:4px 8px;transition:all 0.15s;
+}
+.edit-confirm:hover{background:rgba(77,232,122,0.2);border-color:var(--green);}
+.edit-cancel{
+  font-size:12px;color:rgba(127,168,196,0.4);background:none;border:none;cursor:pointer;
+  padding:4px 5px;border-radius:3px;transition:all 0.15s;
+}
+.edit-cancel:hover{color:var(--red);background:rgba(232,77,106,0.1);}
+.tl-edit-input{
+  font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--accent);
+  background:rgba(77,184,232,0.1);border:1px solid var(--accent);border-radius:3px;
+  width:80px;padding:2px 5px;text-align:center;outline:none;letter-spacing:1px;
+  flex-shrink:0;
+}
+.tl-edit-input.invalid{border-color:var(--red);animation:shake 0.3s ease;}
+.tl-time{cursor:default;transition:color 0.15s;}
+.tl-time:hover{color:var(--accent);}
 .text-input{
   font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--white);
   background:var(--ibg);border:none;border-bottom:1px solid var(--ibdr);
