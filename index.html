@@ -168,7 +168,11 @@ function editTlTime(key, current) {
   const entry = document.getElementById('tl-'+key);
   if (!entry) return;
   const timeEl = entry.querySelector('.tl-time');
+  if (!timeEl) return;
   const orig = timeEl.textContent;
+  // Remove the edit button sibling
+  const editBtn = entry.querySelector('.tl-edit-time');
+  if (editBtn) editBtn.remove();
   timeEl.outerHTML =
     `<input class="tl-edit-input" id="tledit-${key}" type="text" value="${orig}" maxlength="8" `+
     `onkeydown="handleTlEditKey(event,'${key}','${orig}')" oninput="formatTlInput(this)">`;
@@ -196,18 +200,12 @@ function confirmTlEdit(key, orig) {
   }
   // Update Firebase
   if (flightId) db.ref(`flights/${flightId}/interventions/${key}/ts`).set(val);
-  // Re-render the time span
-  inp.outerHTML = `<span class="tl-time">${val}</span>`;
-  // Re-attach edit on click
-  const entry = document.getElementById('tl-'+key);
-  if (entry) {
-    const ts = entry.querySelector('.tl-time');
-    if (ts) ts.addEventListener('dblclick', ()=>editTlTime(key, val));
-  }
+  // Re-render the time span with edit button
+  inp.outerHTML = `<span class="tl-time">${val}</span><button class="tl-edit-time" onclick="editTlTime('${key}','${val}')" title="Edit time">✎</button>`;
 }
 function cancelTlEdit(key, orig) {
   const inp = document.getElementById('tledit-'+key);
-  if (inp) inp.outerHTML = `<span class="tl-time">${orig}</span>`;
+  if (inp) inp.outerHTML = `<span class="tl-time">${orig}</span><button class="tl-edit-time" onclick="editTlTime('${key}','${orig}')" title="Edit time">✎</button>`;
 }
 function syncText(el) { pushField(el.dataset.key, el.value); }
 function pushField(key, value) {
@@ -345,11 +343,11 @@ function addTimelineEntry(key, ts, label, category, append) {
   div.className = 'tl-entry tl-'+category;
   div.id = 'tl-'+key;
   div.innerHTML =
-    `<span class="tl-time" title="Double-tap to edit">${ts}</span>`+
+    `<span class="tl-time">${ts}</span>`+
+    `<button class="tl-edit-time" onclick="editTlTime('${key}','${ts}')" title="Edit time">✎</button>`+
     `<span class="tl-cat">${category}</span>`+
     `<span class="tl-label">${label}</span>`+
     `<button class="tl-del" onclick="deleteIntervention('${key}')" title="Remove">✕</button>`;
-  div.querySelector('.tl-time').addEventListener('dblclick', ()=>editTlTime(key, ts));
 
   if (append) {
     // Insert in sorted order by key (timestamp)
@@ -423,6 +421,7 @@ function switchTab(tab) {
   --red:    #e84d6a;
   --purple: #a078e8;
   --teal:   #2de8c8;
+  --gold:   #e8d34d;
   --ibg:    rgba(77,184,232,0.06);
   --ibdr:   #2c4a63;
   --card-w: min(480px, 100vw - 24px);
@@ -464,7 +463,7 @@ body{
 #flight-id-input:focus{border-color:var(--accent);}
 #flight-id-input.shake{border-color:var(--red);animation:shake 0.3s ease;}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.hint{font-family:'Barlow',sans-serif;font-size:12px;color:rgba(180,210,230,0.8);line-height:1.5;}
+.hint{font-family:'Barlow',sans-serif;font-size:14px;color:rgba(220,235,245,0.95);line-height:1.7;}
 .btn-join{
   background:var(--accent);color:var(--navy);font-family:'Barlow Condensed',sans-serif;
   font-weight:700;font-size:16px;letter-spacing:2px;text-transform:uppercase;
@@ -641,6 +640,14 @@ body{
 .int-btn.vent:hover{background:rgba(45,232,200,0.16);border-color:var(--teal);}
 .tl-entry.tl-vent{background:rgba(45,232,200,0.06);border-left-color:var(--teal);}
 .tl-entry.tl-vent .tl-cat{background:rgba(45,232,200,0.15);color:var(--teal);}
+.int-section-title.packaging{color:var(--gold);}
+.int-btn.packaging{
+  background:rgba(232,211,77,0.08);border-color:rgba(232,211,77,0.3);color:var(--gold);
+}
+.int-btn.packaging:hover{background:rgba(232,211,77,0.18);border-color:var(--gold);}
+.tl-entry.tl-packaging{background:rgba(232,211,77,0.06);border-left-color:var(--gold);}
+.tl-entry.tl-packaging .tl-cat{background:rgba(232,211,77,0.15);color:var(--gold);}
+
 /* Vent trigger / stop button variants */
 .int-btn.vent.vent-trigger{background:rgba(45,232,200,0.13);border-color:var(--teal);border-style:solid;}
 .int-btn.vent.vent-stop{background:rgba(232,77,106,0.08);border-color:rgba(232,77,106,0.35);color:var(--red);}
@@ -787,6 +794,11 @@ body{
 .tl-entry.tl-rsi     .tl-cat{background:rgba(232,160,52,0.15);color:var(--orange);}
 .tl-entry.tl-other   .tl-cat{background:rgba(160,120,232,0.15);color:var(--purple);}
 .tl-label{font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--white);flex:1;letter-spacing:0.5px;}
+.tl-edit-time{
+  font-size:13px;color:rgba(77,184,232,0.4);background:none;border:none;cursor:pointer;
+  padding:4px 5px;border-radius:3px;flex-shrink:0;transition:all 0.15s;line-height:1;
+}
+.tl-edit-time:hover{color:var(--accent);background:rgba(77,184,232,0.1);}
 .tl-del{font-size:10px;color:rgba(180,210,230,0.45);background:none;border:none;cursor:pointer;padding:4px;border-radius:3px;flex-shrink:0;transition:all 0.15s;}
 .tl-del:hover{color:var(--red);background:rgba(232,77,106,0.1);}
 
@@ -800,8 +812,8 @@ body{
 .footer-copyright{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(180,210,230,0.55);letter-spacing:0.5px;margin-top:2px;}
 .footer-url{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(77,184,232,0.8);}
 #qr-container canvas,#qr-container img{
-  width:50px!important;height:50px!important;opacity:0.8;
-  border:1px solid rgba(77,184,232,0.25);padding:2px;background:#fff;border-radius:2px;display:block;
+  width:120px!important;height:120px!important;opacity:0.9;
+  border:2px solid rgba(77,184,232,0.35);padding:4px;background:#fff;border-radius:4px;display:block;
 }
 
 /* ── OVERLAY ─────────────────────────────────── */
@@ -855,7 +867,8 @@ body{
   #narrative-input { font-size: 15px; min-height: 80px; }
   .btn-log-narrative { font-size: 13px; padding: 12px; min-height: 48px; }
 
-  .tl-time { font-size: 12px; min-width: 58px; }
+  .tl-time { font-size: 12px; min-width: 52px; }
+  .tl-edit-time { font-size: 14px; padding: 6px; min-height: 36px; }
   .tl-label { font-size: 14px; }
   .tl-cat { font-size: 9px; padding: 2px 5px; }
   .tl-entry { padding: 8px 10px; gap: 7px; }
@@ -995,6 +1008,14 @@ body{
           <span class="row-label">Arrived Recv. Airport</span>
           <div class="stamp-cell" data-key="arrived_recv_airport"><button class="tap-btn" onclick="stampField('arrived_recv_airport')">⏱ TAP</button></div>
         </div>
+        <div class="row">
+          <span class="row-label">Load in Aircraft</span>
+          <div class="stamp-cell" data-key="load_aircraft"><button class="tap-btn" onclick="stampField('load_aircraft')">⏱ TAP</button></div>
+        </div>
+        <div class="row">
+          <span class="row-label">Unload from Aircraft</span>
+          <div class="stamp-cell" data-key="unload_aircraft"><button class="tap-btn" onclick="stampField('unload_aircraft')">⏱ TAP</button></div>
+        </div>
 
         <div class="divider"></div>
         <div class="section-label">Receiving Facility</div>
@@ -1024,14 +1045,6 @@ body{
           <div class="stamp-cell" data-key="transfer_care"><button class="tap-btn" onclick="stampField('transfer_care')">⏱ TAP</button></div>
         </div>
 
-        <div class="divider"></div>
-        <div class="section-label">Flight Data</div>
-
-        <div class="row">
-          <span class="row-label">Cabin Altitude</span>
-          <input class="text-input" data-key="cabin_altitude" type="text" placeholder="ft / m"
-            oninput="syncText(this)" style="width:120px;">
-        </div>
 
       </div>
     </div><!-- end tab-timeline -->
@@ -1123,7 +1136,17 @@ body{
           </div>
         </div>
 
-        <!-- OTHER INTERVENTIONS -->
+        <!-- PACKAGING -->
+        <div>
+          <div class="int-section-title packaging">📦 Packaging</div>
+          <div class="int-grid">
+            <button class="int-btn packaging" data-label="Crew TOC" onclick="logIntervention('Crew TOC','packaging')">
+              Crew TOC<span class="btn-sub">Transfer of Care</span>
+            </button>
+          </div>
+        </div>
+
+                <!-- OTHER INTERVENTIONS -->
         <div>
           <div class="int-section-title other">🔧 Other Interventions</div>
           <div class="int-grid">
@@ -1244,7 +1267,7 @@ body{
   window.addEventListener('load', () => {
     new QRCode(document.getElementById('qr-container'), {
       text:'https://nurse-adventurer.github.io/transport-timeline.html/',
-      width:50,height:50,
+      width:120,height:120,
       colorDark:'#0d1b2a',colorLight:'#ffffff',
       correctLevel:QRCode.CorrectLevel.M
     });
