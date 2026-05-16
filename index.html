@@ -54,6 +54,7 @@ function joinSession() {
   document.getElementById('session-screen').style.display = 'none';
   document.getElementById('main-screen').style.display    = 'flex';
   document.getElementById('session-badge').textContent    = '✈  ' + raw.toUpperCase();
+  saveToHistory(raw);
 
   // Presence
   const presRef = db.ref(`flights/${flightId}/presence/${localId}`);
@@ -88,6 +89,55 @@ function joinSession() {
   db.ref(`flights/${flightId}/narrative`).on('value', snap => {
     const ta = document.getElementById('narrative-input');
     if (document.activeElement !== ta) ta.value = snap.val()||'';
+  });
+  db.ref(`flights/${flightId}/timelineNotes`).on('value', snap => {
+    const ta = document.getElementById('timeline-notes-input');
+    if (ta && document.activeElement !== ta) ta.value = snap.val()||'';
+  });
+}
+
+// ── SESSION HISTORY (Firebase — shared across devices) ──────
+function saveToHistory(raw) {
+  const key = raw.replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase();
+  db.ref(`history/${key}`).set({
+    id: raw,
+    ts: new Date().toLocaleDateString(),
+    lastUsed: Date.now()
+  });
+}
+
+function renderHistory(data) {
+  const list = document.getElementById('history-list');
+  if (!list) return;
+  const entries = Object.values(data||{})
+    .sort((a,b) => (b.lastUsed||0) - (a.lastUsed||0))
+    .slice(0, 20);
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="history-empty">No previous sessions</div>';
+    return;
+  }
+  list.innerHTML = entries.map(h =>
+    `<button class="history-item" onclick="loadFromHistory('${h.id.replace(/'/g,"\'")}')">
+      <span class="history-id">${h.id.toUpperCase()}</span>
+      <span class="history-date">${h.ts}</span>
+    </button>`
+  ).join('');
+}
+
+function loadFromHistory(id) {
+  document.getElementById('flight-id-input').value = id;
+  joinSession();
+}
+
+function clearHistory() {
+  if (!confirm('Clear all session history?')) return;
+  db.ref('history').remove();
+}
+
+// Start listening to history in Firebase
+function initHistory() {
+  db.ref('history').on('value', snap => {
+    renderHistory(snap.val()||{});
   });
 }
 
@@ -368,6 +418,10 @@ function deleteIntervention(key) {
   if (el) el.remove();
 }
 
+function syncTimelineNotes(el) {
+  if (!flightId) return;
+  db.ref(`flights/${flightId}/timelineNotes`).set(el.value);
+}
 function syncNarrative(el) {
   if (!flightId) return;
   db.ref(`flights/${flightId}/narrative`).set(el.value);
@@ -394,6 +448,8 @@ function clearFlightData() {
   document.querySelectorAll('.text-input').forEach(el => el.value='');
   document.getElementById('timeline-list').innerHTML = '';
   document.getElementById('narrative-input').value = '';
+  const tn = document.getElementById('timeline-notes-input');
+  if (tn) tn.value = '';
   flightId = null;
   document.getElementById('main-screen').style.display    = 'none';
   document.getElementById('session-screen').style.display = 'flex';
@@ -829,6 +885,56 @@ body{
 #timeline-list::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);}
 #timeline-list::-webkit-scrollbar-thumb{background:rgba(77,184,232,0.2);border-radius:2px;}
 
+/* ── SESSION HISTORY ────────────────────────── */
+.history-section{
+  border-top:1px solid var(--rule);
+  padding-top:16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.history-header{display:flex;align-items:center;justify-content:space-between;}
+.history-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--sub);
+}
+.history-clear-btn{
+  font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;background:none;border:none;color:rgba(180,210,230,0.4);
+  cursor:pointer;padding:3px 6px;border-radius:3px;transition:color 0.2s;
+}
+.history-clear-btn:hover{color:var(--red);}
+#history-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;}
+.history-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(77,184,232,0.06);border:1px solid rgba(77,184,232,0.15);
+  border-radius:4px;padding:10px 14px;cursor:pointer;text-align:left;
+  transition:all 0.15s;width:100%;
+}
+.history-item:hover{background:rgba(77,184,232,0.14);border-color:var(--accent);}
+.history-id{
+  font-family:'Share Tech Mono',monospace;font-size:16px;color:var(--accent);
+  letter-spacing:1.5px;font-weight:700;
+}
+.history-date{
+  font-family:'Barlow',sans-serif;font-size:11px;color:rgba(180,210,230,0.5);
+}
+.history-empty{
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  color:rgba(180,210,230,0.3);text-align:center;padding:10px;letter-spacing:1px;
+}
+#history-list::-webkit-scrollbar{width:4px;}
+#history-list::-webkit-scrollbar-thumb{background:rgba(77,184,232,0.2);border-radius:2px;}
+
+/* ── TIMELINE NOTES ─────────────────────────── */
+.timeline-notes-wrap{padding:10px 24px 16px;}
+#timeline-notes-input{
+  font-family:'Barlow',sans-serif;font-size:14px;color:var(--white);
+  background:rgba(77,184,232,0.05);border:1px solid rgba(77,184,232,0.2);
+  border-radius:4px;padding:12px;outline:none;resize:vertical;min-height:100px;
+  width:100%;transition:border-color 0.2s;line-height:1.6;
+}
+#timeline-notes-input:focus{border-color:var(--accent);}
+#timeline-notes-input::placeholder{color:rgba(180,210,230,0.35);font-size:13px;}
+
 /* ── MOBILE ──────────────────────────────────── */
 @media (max-width: 520px) {
   body { padding: 16px 10px 50px; }
@@ -910,6 +1016,14 @@ body{
       onkeydown="if(event.key==='Enter') joinSession()">
     <p class="hint">Use any combination of letters and numbers, but both medical crew members must enter the <strong style="color:var(--accent)">same ID</strong> to share a live session.<br><br><strong style="color:var(--orange)">Important:</strong> When the transport is complete, select <strong style="color:var(--accent)">&ldquo;Save Image&rdquo;</strong> to retain a record of the transport before starting a new session or clearing all entries.</p>
     <button class="btn-join" onclick="joinSession()">✈ Join Session</button>
+
+    <div class="history-section">
+      <div class="history-header">
+        <span class="history-title">Recent Sessions</span>
+        <button class="history-clear-btn" onclick="clearHistory()">Clear</button>
+      </div>
+      <div id="history-list"><div class="history-empty">No previous sessions</div></div>
+    </div>
   </div>
 </div>
 
@@ -1051,6 +1165,14 @@ body{
         <div class="row">
           <span class="row-label">Crew TOC</span>
           <div class="stamp-cell" data-key="crew_toc"><button class="tap-btn" onclick="stampField('crew_toc')">⏱ TAP</button></div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Notes</div>
+        <div class="timeline-notes-wrap">
+          <textarea id="timeline-notes-input"
+            placeholder="Add transport notes, patient condition, crew info…"
+            oninput="syncTimelineNotes(this)"></textarea>
         </div>
 
       </div>
@@ -1261,6 +1383,7 @@ body{
 
 <script>
   window.addEventListener('load', () => {
+    initHistory();
     new QRCode(document.getElementById('qr-container'), {
       text:'https://nurse-adventurer.github.io/transport-timeline.html/',
       width:120,height:120,
