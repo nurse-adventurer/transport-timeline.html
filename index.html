@@ -422,6 +422,19 @@ function syncTimelineNotes(el) {
   if (!flightId) return;
   db.ref(`flights/${flightId}/timelineNotes`).set(el.value);
 }
+function logTimelineNote() {
+  const ta = document.getElementById('timeline-notes-input');
+  const text = ta.value.trim();
+  if (!text) {
+    ta.classList.add('invalid-narrative');
+    ta.focus();
+    setTimeout(() => ta.classList.remove('invalid-narrative'), 600);
+    return;
+  }
+  logIntervention(text, 'note');
+  ta.value = '';
+  if (flightId) db.ref(`flights/${flightId}/timelineNotes`).set('');
+}
 function syncNarrative(el) {
   if (!flightId) return;
   db.ref(`flights/${flightId}/narrative`).set(el.value);
@@ -442,14 +455,26 @@ function logNarrative() {
 
 // ── CLEAR ───────────────────────────────────────────────────
 function clearFlightData() {
-  if (!confirm('Clear all entries and start a new flight?')) return;
-  if (flightId) db.ref(`flights/${flightId}`).set({});
+  if (!confirm('Start a new flight? Current entries will be saved to history.')) return;
+
+  // Detach Firebase listeners for current session (data stays in Firebase)
+  if (flightId) {
+    db.ref(`flights/${flightId}/fields`).off();
+    db.ref(`flights/${flightId}/interventions`).off();
+    db.ref(`flights/${flightId}/narrative`).off();
+    db.ref(`flights/${flightId}/timelineNotes`).off();
+    db.ref(`flights/${flightId}/presence/${localId}`).remove();
+  }
+
+  // Reset UI only — Firebase data is preserved
   document.querySelectorAll('.stamp-cell').forEach(cell => renderStamp(cell,'',false));
   document.querySelectorAll('.text-input').forEach(el => el.value='');
   document.getElementById('timeline-list').innerHTML = '';
   document.getElementById('narrative-input').value = '';
   const tn = document.getElementById('timeline-notes-input');
   if (tn) tn.value = '';
+  stopVentTimer();
+
   flightId = null;
   document.getElementById('main-screen').style.display    = 'none';
   document.getElementById('session-screen').style.display = 'flex';
@@ -1043,7 +1068,7 @@ body{
     <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
   </div>
   <div class="clear-row">
-    <button class="btn btn-new-flight" onclick="clearFlightData()">✈ Clear Entries — Start New Flight</button>
+    <button class="btn btn-new-flight" onclick="clearFlightData()">✈ Start New Flight</button>
   </div>
 
   <div id="form-card">
@@ -1173,6 +1198,7 @@ body{
           <textarea id="timeline-notes-input"
             placeholder="Add transport notes, patient condition, crew info…"
             oninput="syncTimelineNotes(this)"></textarea>
+          <button class="btn-log-narrative" onclick="logTimelineNote()">⏱ Log to Interventions Timeline</button>
         </div>
 
       </div>
