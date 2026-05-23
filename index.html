@@ -459,29 +459,41 @@ function logNarrative() {
 function clearFlightData() {
   if (!confirm('Start a new flight? Current entries will be saved to history.')) return;
 
-  // Detach Firebase listeners for current session (data stays in Firebase)
-  if (flightId) {
-    db.ref(`flights/${flightId}/fields`).off();
-    db.ref(`flights/${flightId}/interventions`).off();
-    db.ref(`flights/${flightId}/narrative`).off();
-    db.ref(`flights/${flightId}/timelineNotes`).off();
-    db.ref(`flights/${flightId}/presence/${localId}`).remove();
-  }
+  try {
+    // Detach Firebase listeners (data stays in Firebase)
+    if (flightId) {
+      db.ref(`flights/${flightId}/fields`).off();
+      db.ref(`flights/${flightId}/interventions`).off();
+      db.ref(`flights/${flightId}/narrative`).off();
+      db.ref(`flights/${flightId}/timelineNotes`).off();
+      db.ref(`flights/${flightId}/presence/${localId}`).remove();
+    }
+  } catch(e) { console.warn('Firebase detach error:', e); }
 
-  // Reset UI only — Firebase data is preserved
-  document.querySelectorAll('.stamp-cell').forEach(cell => renderStamp(cell,'',false));
-  document.querySelectorAll('.text-input').forEach(el => el.value='');
-  document.getElementById('timeline-list').innerHTML = '';
-  document.getElementById('narrative-input').value = '';
-  const tn = document.getElementById('timeline-notes-input');
-  if (tn) tn.value = '';
-  stopVentTimer();
+  try {
+    // Reset UI
+    document.querySelectorAll('.stamp-cell').forEach(cell => renderStamp(cell,'',false));
+    document.querySelectorAll('.text-input').forEach(el => el.value='');
+    const tl = document.getElementById('timeline-list');
+    if (tl) tl.innerHTML = '';
+    const ni = document.getElementById('narrative-input');
+    if (ni) ni.value = '';
+    const tn = document.getElementById('timeline-notes-input');
+    if (tn) tn.value = '';
+    stopVentTimer();
+    // Reset to Timeline tab
+    switchTab('timeline');
+  } catch(e) { console.warn('UI reset error:', e); }
 
+  // Always navigate back — this must run regardless of errors above
   flightId = null;
   document.getElementById('main-screen').style.display    = 'none';
   document.getElementById('session-screen').style.display = 'flex';
   document.getElementById('flight-id-input').value = '';
-  setTimeout(()=>document.getElementById('flight-id-input').focus(), 150);
+  setTimeout(() => {
+    const inp = document.getElementById('flight-id-input');
+    if (inp) inp.focus();
+  }, 150);
 }
 
 // ── TABS ────────────────────────────────────────────────────
